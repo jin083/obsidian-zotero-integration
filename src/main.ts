@@ -262,6 +262,9 @@ export default class ZoteroConnector extends Plugin {
       new Notice('Zotero Integration: no export format configured.');
       return;
     }
+    // preserve the user-set `analysis` status across the in-place re-render
+    const prevAnalysis = (this.app.metadataCache.getFileCache(file) as any)
+      ?.frontmatter?.analysis;
     const database = {
       database: this.settings.database,
       port: this.settings.port,
@@ -274,6 +277,15 @@ export default class ZoteroConnector extends Plugin {
       [{ key: citekey, library }],
       file.path
     );
+    if (prevAnalysis) {
+      try {
+        await this.app.fileManager.processFrontMatter(file, (fm: any) => {
+          fm.analysis = prevAnalysis;
+        });
+      } catch (e) {
+        // non-fatal
+      }
+    }
     new Notice('Zotero: updated active note in place.');
   }
 
