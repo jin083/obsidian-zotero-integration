@@ -618,7 +618,8 @@ async function getTemplateData(
 
 export async function exportToMarkdown(
   params: ExportToMarkdownParams,
-  explicitCiteKeys?: CiteKey[]
+  explicitCiteKeys?: CiteKey[],
+  overridePath?: string
 ): Promise<string[]> {
   const importDate = moment();
   const { database, exportFormat, settings } = params;
@@ -689,6 +690,8 @@ export async function exportToMarkdown(
   };
 
   const getMarkdownPath = async (pathTemplateData: any) => {
+    // update-in-place: write to the active note's path, ignoring outputPathTemplate
+    if (overridePath) return normalizePath(overridePath);
     return normalizePath(
       sanitizeFilePath(
         removeStartingSlash(

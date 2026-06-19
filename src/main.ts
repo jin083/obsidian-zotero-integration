@@ -1,10 +1,11 @@
 import Fuse from 'fuse.js';
-import { EditableFileView, Events, Plugin, TFile } from 'obsidian';
+import { EditableFileView, Events, Notice, Plugin, TFile } from 'obsidian';
 import { shellPath } from 'shell-path';
 
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { LoadingModal } from './bbt/LoadingModal';
 import { getCitationViaPicker } from './bbt/searchPicker';
+import { getLibForCiteKey } from './bbt/jsonRPC';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
 import {
   filesFromNotes,
@@ -129,6 +130,22 @@ export default class ZoteroConnector extends Plugin {
       },
     });
 
+    // Re-render the currently open paper note in place (keeps its folder/location),
+    // refreshing annotations + citation without creating a new file.
+    this.addCommand({
+      id: 'zdc-update-active-note',
+      name: 'Update active note (reload annotations & citation)',
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== 'md') return false;
+        const citekey = (this.app.metadataCache.getFileCache(file) as any)
+          ?.frontmatter?.citekey;
+        if (!citekey) return false;
+        if (!checking) this.updateActiveNote(file, String(citekey));
+        return true;
+      },
+    });
+
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
         if (file instanceof TFile) {
@@ -237,6 +254,27 @@ export default class ZoteroConnector extends Plugin {
       },
       [{ key: citekey, library }]
     );
+  }
+
+  async updateActiveNote(file: TFile, citekey: string) {
+    const format = this.settings.exportFormats[0];
+    if (!format) {
+      new Notice('Zotero Integration: no export format configured.');
+      return;
+    }
+    const database = {
+      database: this.settings.database,
+      port: this.settings.port,
+    };
+    if (citekey.startsWith('@')) citekey = citekey.substring(1);
+    let library = await getLibForCiteKey(citekey, database);
+    if (library == null) library = 1;
+    await exportToMarkdown(
+      { settings: this.settings, database, exportFormat: format },
+      [{ key: citekey, library }],
+      file.path
+    );
+    new Notice('Zotero: updated active note in place.');
   }
 
   async openNotes(createdOrUpdatedMarkdownFilesPaths: string[]) {
