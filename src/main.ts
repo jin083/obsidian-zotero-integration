@@ -146,6 +146,38 @@ export default class ZoteroConnector extends Plugin {
       },
     });
 
+    // Ribbon (sidebar) buttons: one per export format (e.g. "Paper Note") + update active note
+    this.settings.exportFormats.forEach((f) => {
+      this.addRibbonIcon('book-down', `Zotero: ${f.name}`, async () => {
+        const database = {
+          database: this.settings.database,
+          port: this.settings.port,
+        };
+        this.openNotes(
+          await exportToMarkdown({
+            settings: this.settings,
+            database,
+            exportFormat: f,
+          })
+        );
+      });
+    });
+
+    this.addRibbonIcon('refresh-cw', 'Zotero: update active note', () => {
+      const file = this.app.workspace.getActiveFile();
+      if (!file || file.extension !== 'md') {
+        new Notice('Zotero: no active markdown note.');
+        return;
+      }
+      const citekey = (this.app.metadataCache.getFileCache(file) as any)
+        ?.frontmatter?.citekey;
+      if (!citekey) {
+        new Notice('Zotero: active note has no citekey.');
+        return;
+      }
+      this.updateActiveNote(file, String(citekey));
+    });
+
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
         if (file instanceof TFile) {
