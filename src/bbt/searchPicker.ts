@@ -14,9 +14,12 @@ function getKey(item: any): string {
 }
 
 function getCreators(item: any): string {
-  if (!Array.isArray(item?.creators)) return '';
-  return item.creators
-    .map((c: any) => (typeof c === 'string' ? c : c?.lastName || c?.name || ''))
+  if (!Array.isArray(item?.creators) && !Array.isArray(item?.author)) return '';
+  const list = Array.isArray(item?.creators) ? item.creators : item.author;
+  return list
+    .map((c: any) =>
+      typeof c === 'string' ? c : c?.lastName || c?.family || c?.name || ''
+    )
     .filter(Boolean)
     .slice(0, 3)
     .join(', ');
@@ -47,7 +50,12 @@ class ZoteroSearchModal extends SuggestModal<any> {
 
   renderSuggestion(item: any, el: HTMLElement) {
     el.createEl('div', { text: item?.title || '(untitled)' });
-    const year = (item?.date || item?.year || '').toString().slice(0, 4);
+    const year = (item?.issued?.['date-parts']?.[0]?.[0] ||
+      item?.date ||
+      item?.year ||
+      '')
+      .toString()
+      .slice(0, 4);
     const meta = [getCreators(item), year, getKey(item)]
       .filter(Boolean)
       .join(' · ');
@@ -61,7 +69,11 @@ class ZoteroSearchModal extends SuggestModal<any> {
 
   onClose() {
     super.onClose();
-    if (!this.picked) this.onPick(null);
+    // Obsidian fires onClose BEFORE onChooseSuggestion on selection, so defer the
+    // "cancelled" resolution to the next tick to let a selection set `picked` first.
+    window.setTimeout(() => {
+      if (!this.picked) this.onPick(null);
+    }, 0);
   }
 }
 

@@ -615,6 +615,7 @@ export async function exportToMarkdown(
   } catch (e) {
     return [];
   }
+  if (!itemData || !itemData.length) return [];
 
   // Variable to store the paths of the markdown files that will be created on import.
   // This is an array of an interface defined by a citekey and a path.
