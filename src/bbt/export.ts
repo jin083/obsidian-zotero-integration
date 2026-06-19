@@ -119,7 +119,9 @@ function convertNativeAnnotation(
   copy: boolean = false
 ) {
   const annot: Record<string, any> = {
-    date: moment(annotation.dateModified),
+    // use creation date (not dateModified) so moving/editing an annotation does not
+    // re-trigger the "new since last import" filter and append a duplicate entry
+    date: moment(annotation.dateAdded),
     attachment,
     id: annotation.key,
     type: annotation.annotationType,
