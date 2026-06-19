@@ -4,7 +4,7 @@ import { shellPath } from 'shell-path';
 
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { LoadingModal } from './bbt/LoadingModal';
-import { getCAYW } from './bbt/cayw';
+import { getCitationViaPicker } from './bbt/searchPicker';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
 import {
   filesFromNotes,
@@ -173,7 +173,7 @@ export default class ZoteroConnector extends Plugin {
             }
           });
         } else {
-          getCAYW(format, database).then((res) => {
+          getCitationViaPicker(format, database).then((res) => {
             if (typeof res === 'string') {
               editor.replaceSelection(res);
             }

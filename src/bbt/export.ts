@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { CiteKey, getCiteKeyFromAny, getCiteKeys } from './cayw';
-import { getCiteKeysViaSearch } from './searchPicker';
+import { getCiteKeysViaPicker } from './searchPicker';
 import { processZoteroAnnotationNotes } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
 import {
@@ -605,7 +605,7 @@ export async function exportToMarkdown(
   // picker instead of getCiteKeys(database) for interactive Paper Note export.
   const citeKeys = explicitCiteKeys
     ? explicitCiteKeys
-    : await getCiteKeysViaSearch(database);
+    : await getCiteKeysViaPicker(database);
   if (!citeKeys.length) return [];
 
   const libraryID = citeKeys[0].library;
