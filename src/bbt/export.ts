@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { applyBasicTemplates } from './basicTemplates/applyBasicTemplates';
 import { CiteKey, getCiteKeyFromAny, getCiteKeys } from './cayw';
+import { getCiteKeysViaSearch } from './searchPicker';
 import { processZoteroAnnotationNotes } from './exportNotes';
 import { extractAnnotations } from './extractAnnotations';
 import {
@@ -600,9 +601,11 @@ export async function exportToMarkdown(
   const sourcePath = getATemplatePath(params);
   const canExtract = doesEXEExist();
 
+  // Zotero 9: CAYW dialog is broken (returns NaN libraryID). Use the BBT-search
+  // picker instead of getCiteKeys(database) for interactive Paper Note export.
   const citeKeys = explicitCiteKeys
     ? explicitCiteKeys
-    : await getCiteKeys(database);
+    : await getCiteKeysViaSearch(database);
   if (!citeKeys.length) return [];
 
   const libraryID = citeKeys[0].library;
