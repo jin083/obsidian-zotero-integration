@@ -158,9 +158,9 @@ function convertNativeAnnotation(
   if (annotation.annotationImagePath) {
     const parsed = path.parse(annotation.annotationImagePath);
 
-    annot.imageBaseName = `${imageBaseName}-${annot.page}-x${Math.round(
-      annot.x
-    )}-y${Math.round(annot.y)}${parsed.ext}`;
+    // name by stable annotation id (not coords) so editing/re-importing an area
+    // annotation overwrites the same image file instead of creating a duplicate
+    annot.imageBaseName = `${imageBaseName}-${annot.id}${parsed.ext}`;
     annot.imageRelativePath = normalizePath(
       path.join(imageRelativePath, annot.imageBaseName)
     );
