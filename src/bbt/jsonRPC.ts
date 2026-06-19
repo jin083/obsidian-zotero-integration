@@ -260,6 +260,8 @@ export async function getBibFromCiteKeys(
       delete params.quickCopy;
       params.id = cslStyle;
     }
+    // force English output (Zotero's default locale may be non-English)
+    params.locale = 'en-US';
 
     await ZQueue.wait(qid);
     res = await request({

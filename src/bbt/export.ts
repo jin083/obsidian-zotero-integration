@@ -578,7 +578,8 @@ async function getAttachmentData(item: any, database: DatabaseWithPort) {
 async function getTemplateData(
   markdownPath: string,
   item: any,
-  lastImportDate: moment.Moment
+  lastImportDate: moment.Moment,
+  database: DatabaseWithPort
 ) {
   const firstAnnots = item.attachments.find(
     (a: any) => a.annotations?.length
@@ -588,6 +589,27 @@ async function getTemplateData(
   item.lastImportDate = lastImportDate;
   item.lastExportDate = lastImportDate;
   item.isFirstImport = lastImportDate.valueOf() === 0;
+
+  // English Chicago reference for the `citation` frontmatter property
+  try {
+    if (item.citationKey) {
+      const bib = await getBibFromCiteKey(
+        { key: item.citationKey, library: item.libraryID ?? 1 },
+        database,
+        'http://www.zotero.org/styles/chicago-author-date',
+        undefined,
+        true
+      );
+      if (typeof bib === 'string' && bib.trim()) {
+        item.chicagoCitation = bib
+          .replace(/\s+/g, ' ')
+          .replace(/"/g, "'")
+          .trim();
+      }
+    }
+  } catch (e) {
+    // non-fatal: citation field just stays empty
+  }
 
   return await applyBasicTemplates(markdownPath, item);
 }
@@ -804,7 +826,8 @@ export async function exportToMarkdown(
       const templateData = await getTemplateData(
         markdownPath,
         item,
-        lastImportDate
+        lastImportDate,
+        database
       );
       const rendered = await renderTemplates(
         params,
